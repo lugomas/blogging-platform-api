@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/gorilla/mux"
 	"log/slog"
 	"net/http"
 	"roadmaps/projects/blogging-platform-api/internal/models"
@@ -9,7 +10,7 @@ import (
 func HandlePosts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		models.GetAllPosts(w, r)
+		models.GetAllPosts(w)
 	case "POST":
 		models.CreatePost(w, r)
 	default:
@@ -19,10 +20,12 @@ func HandlePosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlePost(w http.ResponseWriter, r *http.Request) {
-	postID := r.URL.Path[len("/posts/"):]
+	vars := mux.Vars(r)
+	postID := vars["id"]
 	if postID == "" {
 		slog.Error("invalid post id: ", "postID", postID)
 		http.Error(w, "post id required", http.StatusBadRequest)
+		return
 	}
 
 	switch r.Method {

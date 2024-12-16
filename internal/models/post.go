@@ -8,20 +8,20 @@ import (
 	"log/slog"
 	"net/http"
 	"roadmaps/projects/blogging-platform-api/internal/database"
-	"time"
+	"strconv"
 )
 
 type Post struct {
-	Id        string    `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Category  string    `json:"category"`
-	Tags      []string  `json:"tags"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	Id       string `json:"id"`
+	Title    string `json:"title"`
+	Content  string `json:"content"`
+	Category string `json:"category"`
+	//Tags      []string  `json:"tags"`
+	//CreatedAt time.Time `json:"createdAt"`
+	//UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func GetAllPosts(w http.ResponseWriter, r *http.Request) {
+func GetAllPosts(w http.ResponseWriter) {
 	rows, err := database.DB.Query("SELECT * FROM posts")
 	if err != nil {
 		slog.Error("failed to fetch posts: ", "error", err)
@@ -33,7 +33,7 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post); err != nil {
+		if err := rows.Scan(&post.Id, &post.Title, &post.Content, &post.Category); err != nil {
 			slog.Error("failed to parse posts: ", "error", err)
 			http.Error(w, "failed to parse posts", http.StatusInternalServerError)
 			return
@@ -51,7 +51,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 	}
 
-	result, err := database.DB.Exec("INSERT INTO posts (id, title, content, category, tags) VALUES (?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category, post.Tags)
+	result, err := database.DB.Exec("INSERT INTO posts (id, title, content, category) VALUES (?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category)
 	if err != nil {
 		slog.Error("failed to insert posts: ", "error", err)
 		http.Error(w, "failed to insert posts", http.StatusInternalServerError)
@@ -71,17 +71,32 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 func GetPost(w http.ResponseWriter, id string) {
 	var post Post
-	err := database.DB.QueryRow("SELECT * FROM posts WHERE id = ?", id).Scan(&post.Id, &post.Title, &post.Content)
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		slog.Error("failed to convert post id to integer: ", "error", err)
+	}
+	// Adjust the SQL query to match the actual structure of your table.
+	slog.Info("Fetching post with ID: ", "id", id)
+	err = database.DB.QueryRow(
+		"SELECT id, title, content, category FROM posts WHERE id = ?", intID,
+	).Scan(&post.Id, &post.Title, &post.Content, &post.Category)
+
+	// Handle no rows found.
 	if errors.Is(err, sql.ErrNoRows) {
 		slog.Error("post not found", "id", id)
 		http.Error(w, "Post not found", http.StatusNotFound)
 		return
-	} else if err != nil {
+	}
+
+	// Handle other SQL errors.
+	if err != nil {
 		slog.Error("failed to fetch posts: ", "error", err)
 		http.Error(w, "Failed to fetch post", http.StatusInternalServerError)
 		return
 	}
 
+	slog.Info("Post fetched successfully: ", "id", id)
+	// Return the post in JSON format.
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(post)
 }
@@ -94,7 +109,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	result, err := database.DB.Exec("UPDATE posts SET id= ?, title = ?, content = ?, category = ?, tags = ? WHERE id = ?", updatedPost.Id, updatedPost.Title, updatedPost.Content, updatedPost.Category, updatedPost.Tags, id)
+	result, err := database.DB.Exec("UPDATE posts SET id= ?, title = ?, content = ?, category = ? WHERE id = ?", updatedPost.Id, updatedPost.Title, updatedPost.Content, updatedPost.Category, id)
 	if err != nil {
 		slog.Error("failed to update posts: ", "error", err)
 		http.Error(w, "Failed to update post", http.StatusInternalServerError)

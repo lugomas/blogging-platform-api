@@ -9,7 +9,10 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Import MySQL driver
 )
 
-var DB *sql.DB
+var (
+	DB     *sql.DB
+	dbName = "blogging01"
+)
 
 func DatabaseInit() {
 	// Initialize the database connection without specifying a database
@@ -26,24 +29,24 @@ func DatabaseInit() {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	// Ensure the 'blogdb' database exists
-	if err := createDatabase("blogdb"); err != nil {
-		slog.Error("Failed to create database: ", "error", err)
+	// Ensure the database exists
+	if err := createDatabase(dbName); err != nil {
+		slog.Error("Failed to connect to database", "dbName", dbName, "error", err)
 		log.Fatalf("Failed to create database: %v", err)
 	}
 
-	// Reconnect to the 'blogdb' database
+	// Reconnect to the database
 	DB.Close()
-	DB, err = sql.Open("mysql", "root:admin123@tcp(localhost:3306)/blogdb")
+	DB, err = sql.Open("mysql", "root:admin123@tcp(localhost:3306)/"+dbName)
 	if err != nil {
-		slog.Error("Failed to connect to blogdb: ", "error", err)
-		log.Fatalf("Failed to connect to blogdb: %v", err)
+		slog.Error("Failed to connect to database", "dbName", dbName, "error", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// Test the database connection again
 	if err := DB.Ping(); err != nil {
-		slog.Error("Failed to connect to blogdb: ", "error", err)
-		log.Fatalf("Failed to ping blogdb: %v", err)
+		slog.Error("Failed to connect to database", "dbName", dbName, "error", err)
+		log.Fatalf("Failed to ping database: %v", err)
 	}
 
 	// Create posts table if it doesn't exist
@@ -66,7 +69,8 @@ func createPostsTable() error {
 	CREATE TABLE IF NOT EXISTS posts (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		title VARCHAR(255) NOT NULL,
-		content TEXT NOT NULL
+		content TEXT NOT NULL,
+	    category VARCHAR(255) NOT NULL
 	)`
 	_, err := DB.Exec(query)
 	return err
