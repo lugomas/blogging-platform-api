@@ -11,7 +11,7 @@ import (
 
 var (
 	DB     *sql.DB
-	dbName = "blogging01"
+	dbName = "blogging02"
 )
 
 func DatabaseInit() {
@@ -70,7 +70,8 @@ func createPostsTable() error {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		title VARCHAR(255) NOT NULL,
 		content TEXT NOT NULL,
-	    category VARCHAR(255) NOT NULL
+	    category VARCHAR(255) NOT NULL,
+	    tags JSON NOT NULL
 	)`
 	_, err := DB.Exec(query)
 	return err
