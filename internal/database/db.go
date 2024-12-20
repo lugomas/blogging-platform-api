@@ -11,7 +11,7 @@ import (
 
 var (
 	DB     *sql.DB
-	dbName = "blogging02"
+	dbName = "blogging03"
 )
 
 func DatabaseInit() {
@@ -67,7 +67,7 @@ func createDatabase(dbName string) error {
 func createPostsTable() error {
 	query := `
 	CREATE TABLE IF NOT EXISTS posts (
-		id INT AUTO_INCREMENT PRIMARY KEY,
+		id CHAR(36) PRIMARY KEY,
 		title VARCHAR(255) NOT NULL,
 		content TEXT NOT NULL,
 	    category VARCHAR(255) NOT NULL,

@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/google/uuid"
 	"log/slog"
 	"net/http"
 	"roadmaps/projects/blogging-platform-api/internal/database"
-	"strconv"
 )
 
 type Post struct {
@@ -58,6 +57,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 		slog.Error("invalid request body: ", "error", err)
 		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
 	}
 
 	tagsJSON, err := json.Marshal(post.Tags)
@@ -67,19 +67,16 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := database.DB.Exec("INSERT INTO posts (id, title, content, category, tags) VALUES (?, ?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category, tagsJSON)
+	// Generate a UUID for the post
+	post.Id = uuid.New().String()
+
+	// Insert the new post into the database
+	_, err = database.DB.Exec("INSERT INTO posts (id, title, content, category, tags) VALUES (?, ?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category, tagsJSON)
 	if err != nil {
 		slog.Error("failed to insert posts: ", "error", err)
 		http.Error(w, "failed to insert posts", http.StatusInternalServerError)
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		slog.Error("failed to get last insert id for posts: ", "error", err)
-		http.Error(w, "Failed to retrieve post ID", http.StatusInternalServerError)
 		return
 	}
-	post.Id = fmt.Sprint(id)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(post)
@@ -89,14 +86,16 @@ func GetPost(w http.ResponseWriter, id string) {
 	var post Post
 	var tagsJSON string
 
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		slog.Error("failed to convert post id to integer: ", "error", err)
-	}
+	// intID, err := strconv.Atoi(id)
+	//
+	//if err != nil {
+	//	slog.Error("failed to convert post id to integer: ", "error", err)
+	//}
+
 	// Adjust the SQL query to match the actual structure of your table.
 	slog.Info("Fetching post with ID: ", "id", id)
-	err = database.DB.QueryRow(
-		"SELECT id, title, content, category, tags FROM posts WHERE id = ?", intID,
+	err := database.DB.QueryRow(
+		"SELECT id, title, content, category, tags FROM posts WHERE id = ?", id,
 	).Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON)
 
 	// Handle no rows found.
