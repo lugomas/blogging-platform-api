@@ -11,7 +11,7 @@ import (
 
 var (
 	DB     *sql.DB
-	dbName = "blogging03"
+	dbName = "blogging05"
 )
 
 func DatabaseInit() {
@@ -71,7 +71,9 @@ func createPostsTable() error {
 		title VARCHAR(255) NOT NULL,
 		content TEXT NOT NULL,
 	    category VARCHAR(255) NOT NULL,
-	    tags JSON NOT NULL
+	    tags JSON NOT NULL,
+	    createdat VARCHAR(255) NOT NULL,
+	    updatedat VARCHAR(255) NOT NULL
 	)`
 	_, err := DB.Exec(query)
 	return err

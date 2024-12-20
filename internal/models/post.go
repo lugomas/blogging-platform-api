@@ -8,16 +8,17 @@ import (
 	"log/slog"
 	"net/http"
 	"roadmaps/projects/blogging-platform-api/internal/database"
+	"time"
 )
 
 type Post struct {
-	Id       string   `json:"id"`
-	Title    string   `json:"title"`
-	Content  string   `json:"content"`
-	Category string   `json:"category"`
-	Tags     []string `json:"tags"`
-	//CreatedAt time.Time `json:"createdAt"`
-	//UpdatedAt time.Time `json:"updatedAt"`
+	Id        string   `json:"id"`
+	Title     string   `json:"title"`
+	Content   string   `json:"content"`
+	Category  string   `json:"category"`
+	Tags      []string `json:"tags"`
+	CreatedAt string   `json:"createdAt"`
+	UpdatedAt string   `json:"updatedAt"`
 }
 
 func GetAllPosts(w http.ResponseWriter) {
@@ -34,7 +35,7 @@ func GetAllPosts(w http.ResponseWriter) {
 
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON); err != nil {
+		if err := rows.Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON, &post.CreatedAt, &post.UpdatedAt); err != nil {
 			slog.Error("failed to parse posts: ", "error", err)
 			http.Error(w, "failed to parse posts", http.StatusInternalServerError)
 			return
@@ -70,8 +71,12 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Generate a UUID for the post
 	post.Id = uuid.New().String()
 
+	// Generate a CreatedAt and UpdatedAt for the post
+	post.CreatedAt = time.Now().Format("200601021504105")
+	post.UpdatedAt = time.Now().Format("200601021504105")
+
 	// Insert the new post into the database
-	_, err = database.DB.Exec("INSERT INTO posts (id, title, content, category, tags) VALUES (?, ?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category, tagsJSON)
+	_, err = database.DB.Exec("INSERT INTO posts (id, title, content, category, tags, createdat, updatedat) VALUES (?, ?, ?, ?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category, tagsJSON, post.CreatedAt, post.UpdatedAt)
 	if err != nil {
 		slog.Error("failed to insert posts: ", "error", err)
 		http.Error(w, "failed to insert posts", http.StatusInternalServerError)
@@ -86,17 +91,11 @@ func GetPost(w http.ResponseWriter, id string) {
 	var post Post
 	var tagsJSON string
 
-	// intID, err := strconv.Atoi(id)
-	//
-	//if err != nil {
-	//	slog.Error("failed to convert post id to integer: ", "error", err)
-	//}
-
 	// Adjust the SQL query to match the actual structure of your table.
 	slog.Info("Fetching post with ID: ", "id", id)
 	err := database.DB.QueryRow(
-		"SELECT id, title, content, category, tags FROM posts WHERE id = ?", id,
-	).Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON)
+		"SELECT id, title, content, category, tags, createdat, updatedat FROM posts WHERE id = ?", id,
+	).Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON, &post.CreatedAt, &post.UpdatedAt)
 
 	// Handle no rows found.
 	if errors.Is(err, sql.ErrNoRows) {
@@ -138,7 +137,10 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	result, err := database.DB.Exec("UPDATE posts SET id= ?, title = ?, content = ?, category = ?, tags = ? WHERE id = ?", updatedPost.Id, updatedPost.Title, updatedPost.Content, updatedPost.Category, tagsJSON, id)
+	// Update post field
+	updatedPost.UpdatedAt = time.Now().Format("200601021504105")
+
+	result, err := database.DB.Exec("UPDATE posts SET id= ?, title = ?, content = ?, category = ?, tags = ?, updatedat = ? WHERE id = ?", id, updatedPost.Title, updatedPost.Content, updatedPost.Category, tagsJSON, updatedPost.UpdatedAt, id)
 	if err != nil {
 		slog.Error("failed to update posts: ", "error", err)
 		http.Error(w, "Failed to update post", http.StatusInternalServerError)
