@@ -22,10 +22,12 @@ type Post struct {
 }
 
 func GetAllPosts(w http.ResponseWriter) {
+	slog.Info("GetAllPosts - fetching all posts")
+
 	rows, err := database.DB.Query("SELECT * FROM posts")
 	if err != nil {
-		slog.Error("failed to fetch posts: ", "error", err)
-		http.Error(w, "failed to fetch posts", http.StatusInternalServerError)
+		slog.Error("Failed to fetch posts from database", "error", err)
+		http.Error(w, "failed to fetch posts from database", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -45,18 +47,22 @@ func GetAllPosts(w http.ResponseWriter) {
 		if err != nil {
 			slog.Error("failed to unmarshal tags: ", "error", err)
 			http.Error(w, "failed to unmarshal tags", http.StatusInternalServerError)
+			return
 		}
 		posts = append(posts, post)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(posts)
+
+	slog.Info("GetAllPosts - Completed fetching posts from database")
 }
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
+	slog.Info("CreatePost - Creating post")
 	var post Post
 	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-		slog.Error("invalid request body: ", "error", err)
+		slog.Error("Request body decoding failed", "error", err)
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -78,21 +84,24 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Insert the new post into the database
 	_, err = database.DB.Exec("INSERT INTO posts (id, title, content, category, tags, createdat, updatedat) VALUES (?, ?, ?, ?, ?, ?, ?)", post.Id, post.Title, post.Content, post.Category, tagsJSON, post.CreatedAt, post.UpdatedAt)
 	if err != nil {
-		slog.Error("failed to insert posts: ", "error", err)
+		slog.Error("CreatePost - Failed to insert post into database", "error", err)
 		http.Error(w, "failed to insert posts", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(post)
+
+	slog.Info("CreatePost - Post created successfully:", "id", post.Id)
 }
 
 func GetPost(w http.ResponseWriter, id string) {
+	slog.Info("GetPost - Fetching post with ID: ", "id", id)
+
 	var post Post
 	var tagsJSON string
 
 	// Adjust the SQL query to match the actual structure of your table.
-	slog.Info("Fetching post with ID: ", "id", id)
 	err := database.DB.QueryRow(
 		"SELECT id, title, content, category, tags, createdat, updatedat FROM posts WHERE id = ?", id,
 	).Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON, &post.CreatedAt, &post.UpdatedAt)
@@ -111,18 +120,22 @@ func GetPost(w http.ResponseWriter, id string) {
 		return
 	}
 
-	slog.Info("Post fetched successfully: ", "id", id)
 	// Return the post in JSON format.
 	err = json.Unmarshal([]byte(tagsJSON), &post.Tags)
 	if err != nil {
 		slog.Error("failed to unmarshal tags: ", "error", err)
 		http.Error(w, "failed to unmarshal tags", http.StatusInternalServerError)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(post)
+
+	slog.Info("GetPost - Post fetched successfully:", "id", id)
 }
 
 func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
+	slog.Info("UpdatePost - Updating post...", "id", id)
+
 	var updatedPost Post
 	if err := json.NewDecoder(r.Body).Decode(&updatedPost); err != nil {
 		slog.Error("invalid request body: ", "error", err)
@@ -139,7 +152,6 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
 
 	// Update post field
 	updatedPost.UpdatedAt = time.Now().Format("200601021504105")
-
 	result, err := database.DB.Exec("UPDATE posts SET id= ?, title = ?, content = ?, category = ?, tags = ?, updatedat = ? WHERE id = ?", id, updatedPost.Title, updatedPost.Content, updatedPost.Category, tagsJSON, updatedPost.UpdatedAt, id)
 	if err != nil {
 		slog.Error("failed to update posts: ", "error", err)
@@ -162,9 +174,13 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(updatedPost)
+
+	slog.Info("UpdatePost - Post updated", "id", id)
 }
 
 func DeletePost(w http.ResponseWriter, id string) {
+	slog.Info("DeletePost - Deleting post...", "id", id)
+
 	result, err := database.DB.Exec("DELETE FROM posts WHERE id = ?", id)
 	if err != nil {
 		slog.Error("failed to delete posts: ", "error", err)
@@ -186,4 +202,6 @@ func DeletePost(w http.ResponseWriter, id string) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+
+	slog.Info("DeletePost - Post deleted", "id", id)
 }

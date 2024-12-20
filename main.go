@@ -27,4 +27,5 @@ func main() {
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		slog.Error("Server failed to start", "error", err)
 	}
+	slog.Info("Server has started", "port", port)
 }

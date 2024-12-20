@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"log/slog"
 
 	_ "github.com/go-sql-driver/mysql" // Import MySQL driver
@@ -16,44 +15,46 @@ var (
 
 func DatabaseInit() {
 	// Initialize the database connection without specifying a database
+	slog.Info("initializing database ...")
 	var err error
 	DB, err = sql.Open("mysql", "root:admin123@tcp(localhost:3306)/")
 	if err != nil {
-		slog.Error("Failed to connect to MySQL: ", "error", err)
-		log.Fatalf("Failed to connect to MySQL: %v", err)
+		slog.Error("failed to connect to MySQL: ", "error", err)
 	}
 
 	// Test the database connection
+	slog.Info("verifying database connection...")
 	if err := DB.Ping(); err != nil {
-		slog.Error("Failed to connect to MySQL: ", "error", err)
-		log.Fatalf("Failed to ping database: %v", err)
+		slog.Error("failed to connect to MySQL: ", "error", err)
 	}
 
 	// Ensure the database exists
+	slog.Info("creating database")
 	if err := createDatabase(dbName); err != nil {
 		slog.Error("Failed to connect to database", "dbName", dbName, "error", err)
-		log.Fatalf("Failed to create database: %v", err)
 	}
 
 	// Reconnect to the database
+	slog.Info("reconnecting to the database...")
 	DB.Close()
 	DB, err = sql.Open("mysql", "root:admin123@tcp(localhost:3306)/"+dbName)
 	if err != nil {
 		slog.Error("Failed to connect to database", "dbName", dbName, "error", err)
-		log.Fatalf("Failed to connect to database: %v", err)
 	}
+	slog.Info("database reconnected")
 
 	// Test the database connection again
+	slog.Info("verifying database connection...")
 	if err := DB.Ping(); err != nil {
 		slog.Error("Failed to connect to database", "dbName", dbName, "error", err)
-		log.Fatalf("Failed to ping database: %v", err)
 	}
 
 	// Create posts table if it doesn't exist
+	slog.Info("creating table..")
 	if err := createPostsTable(); err != nil {
 		slog.Error("Failed to create posts table: ", "error", err)
-		log.Fatalf("Failed to create posts table: %v", err)
 	}
+	slog.Info("table created")
 }
 
 // Create a database if it doesn't exist
