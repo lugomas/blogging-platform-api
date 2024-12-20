@@ -7,6 +7,8 @@ import (
 	"roadmaps/projects/blogging-platform-api/internal/models"
 )
 
+// HandlePosts handles HTTP requests related to multiple posts.
+// Supports GET for fetching all posts and POST for creating a new post.
 func HandlePosts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -19,6 +21,8 @@ func HandlePosts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandlePost handles HTTP requests related to a single post identified by its ID.
+// Supports GET, PUT, and DELETE operations.
 func HandlePost(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	postID := vars["id"]

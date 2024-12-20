@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// Post represents the structure of a blog post
 type Post struct {
 	Id        string   `json:"id"`
 	Title     string   `json:"title"`
@@ -21,9 +22,11 @@ type Post struct {
 	UpdatedAt string   `json:"updatedAt"`
 }
 
+// GetAllPosts retrieves all posts from the database and returns them as a JSON response
 func GetAllPosts(w http.ResponseWriter) {
 	slog.Info("GetAllPosts - fetching all posts")
 
+	// Query all posts from the database
 	rows, err := database.DB.Query("SELECT * FROM posts")
 	if err != nil {
 		slog.Error("Failed to fetch posts from database", "error", err)
@@ -32,17 +35,20 @@ func GetAllPosts(w http.ResponseWriter) {
 	}
 	defer rows.Close()
 
-	var posts []Post
-	var tagsJSON string
+	var posts []Post    // Slice to hold all retrieved posts
+	var tagsJSON string // Temporary variable to hold tags in JSON format
 
+	// Iterate through the query results
 	for rows.Next() {
 		var post Post
+		// Scan each row into a Post struct
 		if err := rows.Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON, &post.CreatedAt, &post.UpdatedAt); err != nil {
 			slog.Error("failed to parse posts: ", "error", err)
 			http.Error(w, "failed to parse posts", http.StatusInternalServerError)
 			return
 		}
 
+		// Parse the tags JSON string into the Tags slice
 		err = json.Unmarshal([]byte(tagsJSON), &post.Tags)
 		if err != nil {
 			slog.Error("failed to unmarshal tags: ", "error", err)
@@ -52,21 +58,26 @@ func GetAllPosts(w http.ResponseWriter) {
 		posts = append(posts, post)
 	}
 
+	// Send the retrieved posts as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(posts)
 
 	slog.Info("GetAllPosts - Completed fetching posts from database")
 }
 
+// CreatePost creates a new post based on the request body and stores it in the database
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	slog.Info("CreatePost - Creating post")
 	var post Post
+
+	// Decode the request body into a Post struct
 	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 		slog.Error("Request body decoding failed", "error", err)
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
+	// Convert the Tags slice into a JSON string
 	tagsJSON, err := json.Marshal(post.Tags)
 	if err != nil {
 		slog.Error("failed to marshal tags: ", "error", err)
@@ -77,7 +88,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// Generate a UUID for the post
 	post.Id = uuid.New().String()
 
-	// Generate a CreatedAt and UpdatedAt for the post
+	// Set timestamps for creation and last update
 	post.CreatedAt = time.Now().Format("200601021504105")
 	post.UpdatedAt = time.Now().Format("200601021504105")
 
@@ -89,19 +100,21 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Respond with the created post
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(post)
 
 	slog.Info("CreatePost - Post created successfully:", "id", post.Id)
 }
 
+// GetPost retrieves a specific post by ID and returns it as a JSON response
 func GetPost(w http.ResponseWriter, id string) {
 	slog.Info("GetPost - Fetching post with ID: ", "id", id)
 
 	var post Post
 	var tagsJSON string
 
-	// Adjust the SQL query to match the actual structure of your table.
+	// Fetch the post from the database
 	err := database.DB.QueryRow(
 		"SELECT id, title, content, category, tags, createdat, updatedat FROM posts WHERE id = ?", id,
 	).Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON, &post.CreatedAt, &post.UpdatedAt)
@@ -120,19 +133,22 @@ func GetPost(w http.ResponseWriter, id string) {
 		return
 	}
 
-	// Return the post in JSON format.
+	// Parse the tags JSON string into the Tags slice
 	err = json.Unmarshal([]byte(tagsJSON), &post.Tags)
 	if err != nil {
 		slog.Error("failed to unmarshal tags: ", "error", err)
 		http.Error(w, "failed to unmarshal tags", http.StatusInternalServerError)
 		return
 	}
+
+	// Send the post as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(post)
 
 	slog.Info("GetPost - Post fetched successfully:", "id", id)
 }
 
+// UpdatePost updates an existing post by ID with new data provided in the request body
 func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
 	slog.Info("UpdatePost - Updating post...", "id", id)
 
@@ -172,12 +188,14 @@ func UpdatePost(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
+	// Send the post as a JSON response
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(updatedPost)
 
 	slog.Info("UpdatePost - Post updated", "id", id)
 }
 
+// DeletePost deletes a specific post by ID from the database
 func DeletePost(w http.ResponseWriter, id string) {
 	slog.Info("DeletePost - Deleting post...", "id", id)
 
@@ -201,6 +219,7 @@ func DeletePost(w http.ResponseWriter, id string) {
 		return
 	}
 
+	// Send the post as a JSON response
 	w.WriteHeader(http.StatusNoContent)
 
 	slog.Info("DeletePost - Post deleted", "id", id)
