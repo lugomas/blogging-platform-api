@@ -16,6 +16,16 @@ Before running the application, ensure you have the following installed on your 
 - **Docker Compose**: This is included with Docker Desktop.
 - **cURL**: Ensure cURL is installed for testing API requests.
 
+## Configuration
+- Store the MySQL credentials in a .env file and reference them in your docker-compose.yml
+- Example .env File:  
+  ```
+    MYSQL_ROOT_PASSWORD=securepassword123
+    MYSQL_USER=blog_user
+    MYSQL_PASSWORD=strongpassword456
+    MYSQL_DATABASE=blog_db
+  ```
+
 ## Installation
 To install and run the app locally, clone the repository and build the Go binary, following the steps below:
 ```
