@@ -16,6 +16,17 @@ Before running the application, ensure you have the following installed on your 
 - **Docker Compose**: This is included with Docker Desktop.
 - **cURL**: Ensure cURL is installed for testing API requests.
 
+## Configuration
+- Make sure docker or colima is running
+- Store the MySQL credentials in a .env file and reference them in your docker-compose.yml
+- Example .env File:  
+  ```
+    MYSQL_ROOT_PASSWORD=securepassword123
+    MYSQL_USER=blog_user
+    MYSQL_PASSWORD=strongpassword456
+    MYSQL_DATABASE=blog_db
+  ```
+
 ## Installation
 To install and run the app locally, clone the repository and build the Go binary, following the steps below:
 ```
@@ -63,6 +74,10 @@ go build -o blogging-platform-api
     ```
     curl -X DELETE http://localhost:8081/posts/{postID}
    ```  
+3. Stop and remove all containers:
+   ```
+    docker-compose down
+   ```
 
 ## License
 This project is licensed under the MIT License.
@@ -73,9 +88,6 @@ This project was developed based on the guidelines provided by [roadmap.sh's Blo
 ## Backlog
 - Include MKDOCS to this project
   - Explain what i've learned from this project
-- Dockerize
-  - Dockerize mysql
-  - Dockerize app
 - Kubernetes?
 - GORM?
 - Understand how could I create this app in the cloud
