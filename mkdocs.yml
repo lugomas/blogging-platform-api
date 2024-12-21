@@ -1,0 +1,8 @@
+site_name: Blogging Platform API Docs
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Posts:
+      - Overview: posts.md

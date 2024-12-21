@@ -19,7 +19,7 @@ Before running the application, ensure you have the following installed on your 
 ## Configuration
 - Make sure docker or colima is running
 - Store the MySQL credentials in a .env file and reference them in your docker-compose.yml
-- Example .env File:  
+- Example .env File:
   ```
     MYSQL_ROOT_PASSWORD=securepassword123
     MYSQL_USER=blog_user
@@ -41,7 +41,7 @@ go build -o blogging-platform-api
 
 ## Usage
 1. Access the app:
-   Open your web browser and navigate to:  
+   Open your web browser and navigate to:
    ```
     http://localhost:8081/posts
    ```  
@@ -49,28 +49,28 @@ go build -o blogging-platform-api
     http://localhost:8081/posts/{postId}
    ```    
 
-2. Open a new terminal and test it via cURL:  
+2. Open a new terminal and test it via cURL:
 
-   GET post by ID:  
+   GET post by ID:
     ```
     curl -v http://localhost:8081/posts/{postId}
    ```    
 
-   Create a post:  
+   Create a post:
     ```
     curl -X POST http://localhost:8081/posts \                                    
     -H "Content-Type: application/json" \
     -d '{"title":"My First Blog Post","content":"Here is my first post","category":"Programming","tags":["Golang","API","Database","Docker"]}'
     ```
-   
-   Update a post:  
+
+   Update a post:
     ```
     curl -X PUT http://localhost:8081/posts/{postID} \
     -H "Content-Type: application/json" \
     -d '{"title":"Updated Blog Post","content":"This is the updated content for the first post.","category":"Astronomy","tags":["Cosmology","Astrophysics"]}'
     ```
-   
-    Delete a post:  
+
+   Delete a post:
     ```
     curl -X DELETE http://localhost:8081/posts/{postID}
    ```  
@@ -84,14 +84,3 @@ This project is licensed under the MIT License.
 
 ## Project Inspiration
 This project was developed based on the guidelines provided by [roadmap.sh's Blogging Platform API project](https://roadmap.sh/projects/blogging-platform-api)
-
-## Backlog
-- user can also filter posts by a search term
-- Include MKDOCS to this project
-  - Explain what i've learned from this project
-- Kubernetes?
-- GORM?
-- Understand how could I create this app in the cloud
-  - API Gateway
-  - RDS
-  - EKS
