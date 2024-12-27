@@ -74,6 +74,11 @@ go build -o blogging-platform-api
     ```
     curl -X DELETE http://localhost:8081/posts/{postID}
    ```  
+
+   Search for a post containing a string that matches the specified term:  
+   ```
+   curl -X GET "http://localhost:8081/posts?term=Working"  
+   ```
 3. Stop and remove all containers:
    ```
     docker-compose down
@@ -89,9 +94,3 @@ This project was developed based on the guidelines provided by [roadmap.sh's Blo
 - user can also filter posts by a search term
 - Include MKDOCS to this project
   - Explain what i've learned from this project
-- Kubernetes?
-- GORM?
-- Understand how could I create this app in the cloud
-  - API Gateway
-  - RDS
-  - EKS
