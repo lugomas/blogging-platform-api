@@ -107,6 +107,61 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	slog.Info("CreatePost - Post created successfully:", "id", post.Id)
 }
 
+// SearchPosts filters posts by a search term in the title, content, or category fields.
+func SearchPosts(w http.ResponseWriter, searchTerm string) {
+
+	query := `
+		SELECT id, title, content, category, tags, createdat, updatedat
+		FROM posts
+		WHERE title LIKE ? OR content LIKE ? OR category LIKE ?
+	`
+
+	// Use wildcard search with the search term
+	likeTerm := "%" + searchTerm + "%"
+	rows, err := database.DB.Query(query, likeTerm, likeTerm, likeTerm)
+	if err != nil {
+		slog.Error("Failed to execute query", "error", err)
+		http.Error(w, "Failed to search posts", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var posts []Post
+	var tagsJSON string
+	for rows.Next() {
+		var post Post
+		if err := rows.Scan(&post.Id, &post.Title, &post.Content, &post.Category, &tagsJSON, &post.CreatedAt, &post.UpdatedAt); err != nil {
+			slog.Error("Failed to scan row", "error", err)
+			http.Error(w, "Failed to retrieve posts", http.StatusInternalServerError)
+			return
+		}
+
+		// Parse the tags JSON string into the Tags slice
+		err = json.Unmarshal([]byte(tagsJSON), &post.Tags)
+		if err != nil {
+			slog.Error("failed to unmarshal tags: ", "error", err)
+			http.Error(w, "failed to unmarshal tags", http.StatusInternalServerError)
+			return
+		}
+
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		slog.Error("Row iteration error", "error", err)
+		http.Error(w, "Error processing posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Write the response as JSON
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(posts); err != nil {
+		slog.Error("Failed to encode posts", "error", err)
+		http.Error(w, "Failed to encode posts", http.StatusInternalServerError)
+		return
+	}
+}
+
 // GetPost retrieves a specific post by ID and returns it as a JSON response
 func GetPost(w http.ResponseWriter, id string) {
 	slog.Info("GetPost - Fetching post with ID: ", "id", id)

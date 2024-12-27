@@ -12,7 +12,15 @@ import (
 func HandlePosts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		models.GetAllPosts(w)
+		// Get the search term from query parameters
+		searchTerm := r.URL.Query().Get("term")
+		if searchTerm != "" {
+			// If a search term is provided, perform a filtered search
+			models.SearchPosts(w, searchTerm)
+		} else {
+			// Otherwise, retrieve all posts
+			models.GetAllPosts(w)
+		}
 	case "POST":
 		models.CreatePost(w, r)
 	default:
