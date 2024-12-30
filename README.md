@@ -89,8 +89,3 @@ This project is licensed under the MIT License.
 
 ## Project Inspiration
 This project was developed based on the guidelines provided by [roadmap.sh's Blogging Platform API project](https://roadmap.sh/projects/blogging-platform-api)
-
-## Backlog
-- user can also filter posts by a search term
-- Include MKDOCS to this project
-  - Explain what i've learned from this project
