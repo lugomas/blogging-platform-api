@@ -1,3 +1,4 @@
+# Stage 1: Build
 # Use the official Go image as a base
 FROM golang:1.22.3 as builder
 
@@ -14,6 +15,7 @@ COPY . .
 # Build the Go application
 RUN CGO_ENABLED=0 GOOS=linux go build -o blogging-platform-api .
 
+# Stage 2: Runtime
 # Create a minimal image for running the application
 FROM alpine:latest
 
