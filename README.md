@@ -1,6 +1,8 @@
 # Blogging Platform API App
 A Go-based API application for managing blog posts, built to provide a robust and scalable backend for a blogging platform. The application integrates with MySQL for data persistence and offers essential blogging features, making it a solid foundation for modern web applications.
 
+**Note**: To have a COMPLETE EXPERIENCE on reading this guide about how to run the app, and also have access to further details regarding it, please clone this repository and run `mkdocs serve`
+
 ## Features
 - **Blog Post Management**: Supports creating, retrieving, updating, and deleting blog posts through RESTful endpoints.
 - **MySQL Integration**: Ensures reliable and efficient data storage with full support for relational database operations.
