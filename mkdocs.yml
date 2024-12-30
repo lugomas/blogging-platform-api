@@ -6,3 +6,4 @@ nav:
   - Home: index.md
   - Posts:
       - Overview: posts.md
+  - Lessons Learned: lessons_learned.md
