@@ -31,15 +31,22 @@ func connectToDatabase() (*sql.DB, error) {
 	var err error
 
 	for i := 0; i < maxRetries; i++ {
-		slog.Info("Attempting to connect to the database...")
+		slog.Info("Attempting to connect to the database...", "rootDsn", rootDsn)
 		db, err = sql.Open("mysql", rootDsn)
+		if err != nil {
+			slog.Error("Failed to open connection with database", "err", err)
+			return nil, err
+		}
 		if err == nil {
-			if pingErr := db.Ping(); pingErr == nil {
+			pingErr := db.Ping()
+			if pingErr == nil {
 				slog.Info("Successfully connected to the database!")
 				return db, nil
+			} else {
+				slog.Warn("Failed to connect to the database, retrying...", "retry", i+1, "error", pingErr)
+				return nil, pingErr
 			}
 		}
-		slog.Warn("Failed to connect to the database, retrying...", "retry", i+1, "error", err)
 		time.Sleep(retryInterval)
 	}
 
